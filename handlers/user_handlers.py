@@ -92,7 +92,7 @@ async def process_add_new_park(message: Message, state: FSMContext):
 async def process_add_phone(message: Message, state: FSMContext):
     await state.update_data(phone = message.text)
     current_state = await state.get_data()
-    await message.answer(text=f'Отлично! Вы добавили номер телефона: {current_state.get('phone')} ')
+    await message.answer(text=f'Отлично! Вы добавили номер телефона: {current_state.get("phone")} ')
     await state.set_state(FSM_add_station.state_add_adress)
     await message.answer(text="А теперь введите адрес Парка", reply_markup=kb_main_one_button)
 
@@ -101,7 +101,7 @@ async def process_add_phone(message: Message, state: FSMContext):
 async def process_add_adress(message: Message, state: FSMContext):
     await state.update_data(adress = message.text)
     current_state = await state.get_data()
-    await message.answer(text=f'Отлично! Вы добавили адрес: {current_state.get('adress')} ')
+    await message.answer(text=f'Отлично! Вы добавили адрес: {current_state.get("adress")} ')
     await state.set_state(FSM_add_station.state_add_link_lokation)
     await message.answer(text='Вставте ссылку на электронную карту с адресом Парка. Для этого скопируйте её, например, в приложении Яндекс.карты', reply_markup=kb_main_one_button)
 
