@@ -1,0 +1,4 @@
+keyboards/__pycache__/keyboards.cpython-312.pyc
+venv/
+*.pyc
+.env
