@@ -81,7 +81,7 @@ async def add_new_park(message: Message, state: FSMContext):
 async def process_add_new_park(message: Message, state: FSMContext):
     await state.update_data(name_station=message.text)
     current_state = await state.get_data()
-    await message.answer(text=f'Отлично! Вы добавили парк: "{current_state.get('name_station')}" ')
+    await message.answer(text=f'Отлично! Вы добавили парк: {current_state.get("name_station")} ')
     await state.set_state(FSM_add_station.state_add_phone)
     await message.answer(text='А теперь введите номер телефона', reply_markup=kb_main_one_button)
 
