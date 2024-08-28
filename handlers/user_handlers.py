@@ -111,7 +111,7 @@ async def process_add_link_lokation(message: Message, state: FSMContext):
     await state.update_data(link_lokation = message.text)
     data = await state.get_data()
     current_state = {"name_station": data['name_station'], "phone": data['phone'], "adress": data['adress'], "link_lokation": data['link_lokation']}
-    await message.answer(text=f'Отлично! Ссылка на карту: {current_state.get('link_lokation')} ')
+    await message.answer(text=f'Отлично! Ссылка на карту: {current_state.get("link_lokation")} ')
     await add_station(data=current_state)
 
     await state.clear()
@@ -130,7 +130,7 @@ async def push_add_new_doctor(message: Message, state: FSMContext):
 async def add_new_doctor(message: Message, state: FSMContext):
     await state.update_data(name_doctor=message.text)
     current_state = await state.get_data()
-    await message.answer(text=f'Отлично! Вы добавили название нового пункта проведения медосмотра: "{current_state.get('name_doctor')}" ',
+    await message.answer(text=f'Отлично! Вы добавили название нового пункта проведения медосмотра: {current_state.get("name_doctor")} ',
                          reply_markup=kb_main_one_button)
     await state.set_state(FSM_add_doctor.state_add_doctor_adress)
     await message.answer(text='А теперь введите адрес прохождения медосмотра')
@@ -141,7 +141,7 @@ async def add_new_doctor_adress(message: Message, state: FSMContext):
     await state.update_data(adress_doctor=message.text)
     data = await state.get_data()
     current_state = {"name_doctor": data['name_doctor'], "adress_doctor": data['adress_doctor']}
-    await message.answer(text=f'Отлично! Вы добавили адрес нового пункта проведения медосмотра: "{current_state.get('adress_doctor')}" ')
+    await message.answer(text=f'Отлично! Вы добавили адрес нового пункта проведения медосмотра: {current_state.get("adress_doctor")}')
     await add_doctor(data=current_state)
     await state.clear()
     await message.answer(text='Данные сохранены.\nВы находитесь в режиме администрирования', reply_markup=kb_admin_edit())
