@@ -24,6 +24,12 @@ async def get_anythink_station(name_station: str) -> Stations:
     async with async_session() as session:
         return await session.scalar(select(Stations).where(Stations.name_station == name_station))
 
+async def del_station(name_station: str):
+    async with async_session() as session:
+        station = await session.scalar(select(Stations).where(Stations.name_station == name_station))
+        if station:
+            await session.delete(station)
+            await session.commit()
 
 
 async def add_doctor(data: dict):
@@ -45,5 +51,5 @@ async def del_doctor(name_doctor):
     async with async_session() as session:
         doctor = await session.scalar(select(Doctors).where(Doctors.name_doctor == name_doctor))
         if doctor:
-            session.delete(doctor)
+            await session.delete(doctor)
             await session.commit()

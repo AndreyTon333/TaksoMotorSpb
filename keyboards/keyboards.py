@@ -1,8 +1,16 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from database.table import async_session, Stations, Doctors
+#from aiogram.types import InlineKeyboardButton,InlineKeyboardMarkup
+#from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-
+"""
+def kb_in_del_station() -> InlineKeyboardMarkup:
+    but = InlineKeyboardButton(text=f'Да, удалить выбранный Парк')
+                               #callback_data='del_station')
+    kb = InlineKeyboardMarkup(inline_keyboard=[[but]])
+    return kb
+"""
 
 # Кнопки главной клавиатуры
 def kb_main() -> ReplyKeyboardMarkup:
@@ -39,7 +47,7 @@ kb_main_one_button = ReplyKeyboardMarkup(keyboard=[[button_mane_menu]], resize_k
 def kb_b_stations (stations: list) -> ReplyKeyboardMarkup:
     kb_builder = ReplyKeyboardBuilder()
     buttons: list[KeyboardButton] = [
-            KeyboardButton(text=f'{station.name_station}') for station in stations]
+            KeyboardButton(text=f'{station}') for station in stations]
     kb_builder.row(*buttons, width=2)
     kb_builder.row(button_back, button_mane_menu)
     return kb_builder.as_markup()
@@ -48,11 +56,21 @@ def kb_b_stations (stations: list) -> ReplyKeyboardMarkup:
 def kb_b_doctors (doctors: list) -> ReplyKeyboardMarkup:
     kb_b = ReplyKeyboardBuilder()
     buttons: list[KeyboardButton] = [
-        KeyboardButton(text=f'{doctor.name_doctor}') for doctor in doctors
+        KeyboardButton(text=f'{doctor}') for doctor in doctors
     ]
     kb_b.row(*buttons, width=2)
     kb_b.row(button_mane_menu)
     return kb_b.as_markup()
+
+# Динамическая клавиатера из названий Станций для удаления
+def kb_b_del_stations (stations: list) -> ReplyKeyboardMarkup:
+    kb_builder = ReplyKeyboardBuilder()
+    buttons: list[KeyboardButton] = [
+            KeyboardButton(text=f'{station}') for station in stations]
+    kb_builder.row(*buttons, width=2)
+    kb_builder.row(button_mane_menu)
+    return kb_builder.as_markup()
+
 
 # Переход в режим администрирования при нажатии на кнопку 'Перейти в режим "Администратор"'
 def kb_admin_edit() -> ReplyKeyboardMarkup:
@@ -66,19 +84,6 @@ def kb_admin_edit() -> ReplyKeyboardMarkup:
         resize_keyboard=True
     )
     return keybord
-"""
-# Переход из режима администрирования в главное меню при нажатии на кнопку 'Выйти из режима "Администратор"'
-def kb_stop_admin() -> ReplyKeyboardMarkup:
-    button_stop_admin=KeyboardButton(text='Выйти из режима "Администратор"')
-    keybord = ReplyKeyboardMarkup(
-        keyboard=[[button_stop_admin]],
-        resize_keyboard=True
-    )
-    return keybord
-"""
-# Переход в режим Добавления нового парка
-#def kb_add_station() -> ReplyKeyboardMarkup:
-
 
 
 # Попытка создать общую функцию
@@ -100,6 +105,15 @@ def kbb_servisis() -> ReplyKeyboardMarkup:
         resize_keyboard=True
     )
     return keyboard
+
+# клавиатура с одной кнопкой "Да, удалить этот пункт медосмотра из БД"
+but_del_doctor = KeyboardButton(text="Да, удалить этот пункт медосмотра из БД")
+kb_del_doctor = ReplyKeyboardMarkup(keyboard=[[but_del_doctor]], resize_keyboard=True)
+
+# клавиатура с одной кнопкой "Да, удалить эту стацию из Базы Данных"
+but_del_station = KeyboardButton(text="Да, удалить этот Парк из Базы Данных")
+kb_del_station = ReplyKeyboardMarkup(keyboard=[[but_del_station]], resize_keyboard=True)
+
 
 # Словарь с адресами МЕДИКОВ
 """

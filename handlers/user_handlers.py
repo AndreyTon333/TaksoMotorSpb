@@ -4,8 +4,8 @@ from aiogram.types import Message
 from aiogram.fsm.state import State, default_state, StatesGroup
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
-from keyboards.keyboards import kb_b_doctors, kb_main, kb_b_stations, kb_contact_location_station, kbb_servisis, kb_admin_edit, kb_main_one_button #kb_stop_admin
-from database.reqests import add_station, get_stations, add_doctor, get_doctors, get_adress_doctor, get_anythink_station
+from keyboards.keyboards import kb_b_doctors, kb_main, kb_b_stations, kb_contact_location_station, kbb_servisis, kb_admin_edit, kb_main_one_button, kb_del_doctor, kb_del_station, kb_b_del_stations
+from database.reqests import add_station, get_stations, add_doctor, get_doctors, get_adress_doctor, get_anythink_station, del_doctor, del_station
 from filters.filter import FilterNameDoctor, FilterNameStation
 # from database.reqests import add_station
 
@@ -28,6 +28,12 @@ class FSM_add_station(StatesGroup):
 class FSM_add_doctor(StatesGroup):
     state_add_doctor = State()
     state_add_doctor_adress = State()
+
+class FSM_del_doctor(StatesGroup):
+    state_del_doctor = State()
+
+class FSM_del_station(StatesGroup):
+    state_del_station = State()
 
 # Этот хэндлер срабатывает на команду /start
 @router.message(CommandStart())
@@ -64,7 +70,7 @@ async def process_but_menu(message: Message, state: FSMContext):
 
 # Этот хэндлер срабатывает при нажатии на button_admin АДМИНИСТРИРОВАНИЕ
 @router.message(F.text == 'Перейти в режим "Администратор"')
-async def process_administrator(message: Message, state: FSMContext):
+async def process_administrator(message: Message):
     await message.answer(text='Вы перешли в режим администрирования', reply_markup=kb_admin_edit())
     await message.answer(text='Вы можете добавить новый Парк или адрес прохождения Медосмотра в базу данных или удалить их из базы данных.\nИспользуйте кнопки.')
 
@@ -151,14 +157,15 @@ async def add_new_doctor_adress(message: Message, state: FSMContext):
 # Этот хэндлер срабатывает при нажатии на button_1 РАБОТА С ВОДИТЕЛЯМИ (АВТОКОЛОННА)
 @router.message(F.text == 'РАБОТА С ВОДИТЕЛЯМИ (АВТОКОЛОННА)')
 async def process_but_1(message: Message, state: FSMContext):
-    stations = [station for station in await get_stations()]
+    stations = [station.name_station for station in await get_stations()]
+    #print(stations)
     await message.answer(text='Выберете парк, где получали автомобили:', reply_markup=kb_b_stations(stations))
     await state.set_state(FSMback.state_parks)
 
 
     # Этот хэндлер срабатывает при нажатии  кнопки button_nnn ПАРКИ
 #@router.message(lambda x: x.text in ['Кировский завод', 'Маршала Жукова', 'Рыбацкий проезд', 'Оптиков', 'Кубатура', 'Звёздная', 'Кушелевская дорога'])
-@router.message(FilterNameStation())
+@router.message(FilterNameStation(), FSMback.state_parks)
 async def process_push_park_button(message: Message, state: FSMContext):
     await message.answer(text=f'Выбрана площадка "{message.text}"', reply_markup=kb_contact_location_station(message.text))
     await state.set_state(FSMback.state_contact_location)
@@ -230,26 +237,70 @@ async def process_DTP(message: Message):
 async def process_putevoi_list(message: Message):
     await message.answer_photo(photo='AgACAgIAAxkBAAICGWbLCRZmcDKj2qJYvBsLZiT009DdAAJY5zEb5UBYSui78qTOrrsDAQADAgADeQADNQQ')
 
-# этот роутер срабатывает при нажатии на МЕДИКИ
+
+#Роутер на нажатие кнопки "Удалить Парк" И установка состояния state_del_station
+@router.message(F.text == "Удалить Парк")
+async def process_del_station_in_admin_menu(message: Message, state: FSMContext):
+    stations = [station.name_station for station in await get_stations()]
+    await message.answer(text="Выберете название Парка, который вы хотите удалить. \nИспользуйте кнопки", reply_markup=kb_b_del_stations(stations))
+    await state.set_state(FSM_del_station.state_del_station)
+
+
+@router.message(FilterNameStation(), FSM_del_station.state_del_station)
+async def process_chek_del_station(message: Message, state: FSMContext):
+    stations = [station.name_station for station in await get_stations()]
+    if message.text in stations:
+        await message.answer(text=f'Вы действительно хотите удалить из базы данных Парк <b>{message.text}</b>?', reply_markup=kb_del_station)
+        await state.update_data(name_station=message.text)
+    else:
+        await message.answer(text="Такого Парка нет\nВыберете идин из существующих Парков. Для этого используйте кнопки", reply_markup=kb_b_del_stations(stations))
+
+#Роутер на срабатывание кнопки "Да, удалить этот Парк из Базы Данных"
+@router.message(F.text == "Да, удалить этот Парк из Базы Данных", FSM_del_station.state_del_station)
+async def process_del_station_after_chek(message: Message, state: FSMContext):
+    data = await state.get_data()
+    await del_station(data['name_station'])
+    await message.answer(text=f'Парк <b>{data["name_station"]}</b> удален из базы данных\n'
+                         f'Вы находитесь в режиме администрирования', reply_markup=kb_admin_edit())
+    await state.clear()
+
+# Роутер на нажатие кнопки "Удалить адрес медосмотра" и установка состояния state_del_doctor
+@router.message(F.text == "Удалить адрес медосмотра")
+async def process_del_doctor_in_admin_menu(message: Message, state: FSMContext):
+    doctors = [doctor.name_doctor for doctor in await get_doctors()]
+    await message.answer(text="Выберете пункт прохождения медосмотра, который вы хотите удалить. \nИспользуйте кнопки", reply_markup=kb_b_doctors(doctors))
+    await state.set_state(FSM_del_doctor.state_del_doctor)
+
+# Роутер на состояние state_del_doctor и нажатие кагого-либо пункта медосмотра
+@router.message(FilterNameDoctor(), FSM_del_doctor.state_del_doctor)
+async def process_check_del_doctor(message: Message, state: FSMContext):
+    doctors = [doctor.name_doctor for doctor in await get_doctors()]
+    if message.text in doctors:
+        await message.answer(text=f'Вы действительно хотите удалить из базы данных пункт проведения медосмотра <b>{message.text}</b>?', reply_markup=kb_del_doctor)
+        await state.update_data(name_doctor=message.text)
+    else:
+        await message.answer(text="Такого пункта прохождения медосмотра нет\nВыберете идин из существующих пунктов. Для этого используйте кнопки", reply_markup=kb_b_doctors(doctors))
+
+# Роутер на срабатывание кнопки "Да, удалить этот пункт медосмотра из БД"
+@router.message(F.text == "Да, удалить этот пункт медосмотра из БД", FSM_del_doctor.state_del_doctor)
+async def procces_del_doctor_after_check(message: Message, state: FSMContext):
+    data = await state.get_data()
+    await del_doctor(data['name_doctor'])
+    await message.answer(text=f'Пункт проведения медосмотра <b>{data["name_doctor"]}</b> удален из базы данных\n'
+                         f'Вы находитесь в режиме администрирования', reply_markup=kb_admin_edit())
+    await state.clear()
+
+
 @router.message(F.text == 'МЕДИКИ')
 async def process_doctor(message: Message):
-    doctors = [doctor for doctor in await get_doctors()]
+    doctors = [doctor.name_doctor for doctor in await get_doctors()]
     await message.answer(text='Выберите пункт прохождения медосмотра:', reply_markup=kb_b_doctors(doctors))
 
 @router.message(FilterNameDoctor())
 async def process_doctor_show_adress(message: Message):
     doctor = await get_adress_doctor(name_doctor=message.text)
-
     await message.answer(text=f'{doctor.adress_doctor}')
 
-
-
-
-
-
-
-
-#button_8 = KeyboardButton(text='МЕДИКИ')
-#button_9 = KeyboardButton(text='ТАБЛИЦА ШТРАФОВ')
+    #button_9 = KeyboardButton(text='ТАБЛИЦА ШТРАФОВ')
 #button_10 = KeyboardButton(text='Гос. тех. осмотр')
 #button_11 = KeyboardButton(text='МЕТАН')
